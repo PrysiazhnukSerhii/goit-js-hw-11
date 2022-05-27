@@ -1,8 +1,9 @@
 import './sass/main.scss';
+import InfiniteScroll from "infinite-scroll";
 
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
-// ---------------------------------------------------------------------Capa
+
 import { createGallery } from './js/createGallery';
 
 
@@ -15,6 +16,10 @@ const CLOUDY_KEY = "27562603-8a4226043483e253e97fc4251";
 
 let inputText =  null;
 let pageNumber = null;
+let numbersItemDownload = 40;
+
+
+
 
 
 
@@ -22,91 +27,112 @@ searchForm.addEventListener("input",(e)=> inputText= e.target.value.trim());
 searchForm.addEventListener("submit", onFormSubmit);
 
 
-
-buttonLernMore.addEventListener("click",(e)=>{
-    pageNumber +=1;
-
-    objecktCardMake(makeLink ()).then(e=>createGallery (e));
-
-    popUps ()
-
-} )
+let infScroll = createInfScroll () ;
 
 
-
-
-function toggelButtonMore (value){
-  buttonLernMore.classList.toggle('is-hidden',value)
-}
-
-
-async function onFormSubmit(e) {
+function onFormSubmit(e) {
     e.preventDefault();
     gallery.innerHTML = "";
 
-    pageNumber=1;
+    if(infScroll){
+        infScroll.destroy();
+    }
 
-    toggelButtonMore (true);
+    
+    infScroll = createInfScroll ();
 
-    let chekcRequestBackend = await objecktCardMake(makeLink ());
+    scrollOn ()
 
-    popUps ();
-
-     createGallery (chekcRequestBackend);
-
+  
+   infScroll.loadNextPage();
+    
+   
 };
 
+function createInfScroll (){
+  return  new InfiniteScroll( gallery, {
+
+        path:  function(u) {   
+    
+            let  url =  `${BASE_URS}?key=${CLOUDY_KEY}&q=${inputText}&image_type=photo&orientation=horizontal&safesearch=true&per_page=${numbersItemDownload}&page=${this.pageIndex}`; 
+    
+            pageNumber=this.loadCount
+            
+
+            console.log(this.pageIndex);
+            console.log(this.loadCount);
+            
+
+            
+                return url;
+
+            
+            
+
+            
+           
+        },
+        append: false,
+        history: false,
+        responseBody: 'json',
+        status: '.scroll-status',
+        checkLastPage: '.pagination__next',
+      });
+}
 
 
-
-async function  popUps (){
+function scrollOn (){
+  return  infScroll.on( 'load', function (ul){
 
     
-   let checkUrl = await fetch(`${BASE_URS}?key=${CLOUDY_KEY}&q=${inputText}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40`).then(respons=>respons.json());
+        if(ul.totalHits>0 && this.pageIndex===2 ){
+            Notify.info(`Hooray! We found ${ul.totalHits} images.`);
+        }
+    
+        let totalPage =Math.ceil(ul.totalHits/numbersItemDownload) ;
+    
+       if(totalPage===0){
+           Notify.failure('Sorry, there are no images matching your search query. Please try again.'); 
+       }
+        
+        if (pageNumber===totalPage && totalPage>1 ){
+        
+        infScroll.destroy();
 
-   
-   if(checkUrl.totalHits < 1) {
-    Notify.failure('Sorry, there are no images matching your search query. Please try again.'); 
-    return;
-   };
-   
+        infScroll = null
 
-   if(pageNumber===1){
-    Notify.info(`Hooray! We found ${checkUrl.totalHits} images.`);
-
-   }
-
-   if(pageNumber*40 >=checkUrl.totalHits && checkUrl.totalHits > 1 && pageNumber>1 ){
+        Notify.info("We're sorry, but you've reached the end of search results.",{position : "right-bottom",width:"350px",fontSize:"20px"});
+        return;}
+        
+        createGallery (ul.hits);
+        
+        
+    });
 
     
-    Notify.info("We're sorry, but you've reached the end of search results.",{position : "right-bottom",width:"350px",fontSize:"20px"});
-    return;
-   }
-
-   if(40%checkUrl.totalHits===40){
-    toggelButtonMore (false);
-   }
-
- 
-   
 }
 
 
 
 
 
-function makeLink (){
-    
-    return `${BASE_URS}?key=${CLOUDY_KEY}&q=${inputText}&image_type=photo&orientation=horizontal&safesearch=true&per_page=40&page=${pageNumber}`;
-
-};
 
 
-async function objecktCardMake (e){
-   const objecktCard= await fetch(e).then(respons=>respons.json());
 
-   return objecktCard.hits
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
