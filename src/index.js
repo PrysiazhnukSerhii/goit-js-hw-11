@@ -58,19 +58,8 @@ function createInfScroll (){
     
             pageNumber=this.loadCount
             
-
-            console.log(this.pageIndex);
-            console.log(this.loadCount);
-            
-
-            
                 return url;
-
-            
-            
-
-            
-           
+          
         },
         append: false,
         history: false,
