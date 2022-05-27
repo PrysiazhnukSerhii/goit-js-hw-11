@@ -60,10 +60,15 @@
 }
 
 .info-item {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
     text-align: center;
+    flex-direction: column;
 }
 
 .contacts__icon{
     width: 16px;
     height: 16px;
 }
+
